@@ -7,11 +7,11 @@ import (
 	"strconv"
 )
 
-type handler struct {
+type TCPHandler struct {
 	Sessions []*session.Shell
 }
 
-func (handle *handler) Handle(port int) {
+func (handler *TCPHandler) Handle(port int) {
 	soc, err := net.Listen("tcp4", ":"+strconv.Itoa(port))
 	defer soc.Close()
 	log.WithFields(log.Fields{"port": port}).Error("starting handler")
@@ -23,6 +23,6 @@ func (handle *handler) Handle(port int) {
 		if err != nil {
 			log.Fatal(err)
 		}
-		handle.Sessions = append(handle.Sessions, session.NewShell(conn))
+		handler.Sessions = append(handler.Sessions, session.NewShell(conn))
 	}
 }

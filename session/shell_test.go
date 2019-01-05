@@ -7,16 +7,23 @@ import (
 	"testing"
 )
 
-// TestHandleReadOpen tests a single read from a pipe left open
-func TestHandleReadOpen(t *testing.T) {
+// shellFixture returns a pipe to write to for the shell to read, a pipe to read from to get shell output, and the shell attached
+func shellFixture() (*io.PipeWriter, *io.PipeReader, *Shell){
+	readPipeReader, readPipeWriter := io.Pipe()
+	writePipeReader, writePipeWriter := io.Pipe()
+	testShell := &Shell{active: true, reader: bufio.NewReader(readPipeReader), ReadInteractive: make(chan string, 10),
+		writer: writePipeWriter, WriteInteractive: make(chan string, 10)}
+	return readPipeWriter, writePipeReader, testShell
+}
+
+// TestRead tests a single non-interactive read
+func TestRead(t *testing.T) {
 	testVal := "test text\n"
-	pipeReader, pipeWriter := io.Pipe()
-	testShell := Shell{active: true, reader: bufio.NewReader(pipeReader), Read: make(chan string, 10)}
+	pipeWriter, _, testShell := shellFixture()
 	go func() {
 		fmt.Fprint(pipeWriter, testVal)
 	}()
-	go testShell.handleRead()
-	recvVal := <-testShell.Read
+	recvVal, _ := testShell.Read()
 	if recvVal != testVal {
 		t.Errorf("Received value was incorrect, got: %s, want: %s", testVal, recvVal)
 	}
@@ -25,34 +32,32 @@ func TestHandleReadOpen(t *testing.T) {
 	}
 }
 
-// TestHandleReadOpen tests a single read from a pipe that is closed
-func TestHandleReadClose(t *testing.T) {
+// TestReadError test a single non-interactive read with an EOF
+func TestReadError(t *testing.T) {
 	testVal := "test text\n"
-	pipeReader, pipeWriter := io.Pipe()
-	testShell := Shell{active: true, reader: bufio.NewReader(pipeReader), Read: make(chan string, 10)}
+	pipeWriter, _, testShell := shellFixture()
 	go func() {
 		fmt.Fprint(pipeWriter, testVal)
 		pipeWriter.Close()
 	}()
-	go testShell.handleRead()
-	recvVal := <-testShell.Read
-	// Receive twice to ensure we've exhausted the buffer
-	<-testShell.Read
-	if recvVal != testVal {
-		t.Errorf("Received value was incorrect, got: %s, want: %s", testVal, recvVal)
+	testShell.Read()
+	_, err := testShell.Read()
+	if err != io.EOF {
+		t.Errorf("Expected EOF")
 	}
 	if testShell.active {
 		t.Errorf("Shell incorrectly left active")
 	}
 }
 
-// TestHandleWriteActive test a single write from a pipe
-func TestHandleWriteActive(t *testing.T) {
+
+// TestWrite tests a single non-interactive write
+func TestWrite(t *testing.T) {
 	testVal := "test text\n"
-	pipeReader, pipeWriter := io.Pipe()
-	testShell := Shell{active: true, writer: pipeWriter, Write: make(chan string, 10)}
-	testShell.Write <- testVal
-	go testShell.handleWrite()
+	_, pipeReader, testShell := shellFixture()
+	go func() {
+		testShell.Write(testVal)
+	}()
 	bufferedReader := bufio.NewReader(pipeReader)
 	recvVal, err := bufferedReader.ReadString('\n')
 	if err != nil {
@@ -63,8 +68,45 @@ func TestHandleWriteActive(t *testing.T) {
 	}
 }
 
-// TestHandleWriteInactive tests handleWrite returns when inactive
-func TestHandleWriteInactive(t *testing.T) {
-	testShell := Shell{active: false}
-	testShell.handleWrite()
+// TestHandleReadInteractive tests a single interactive read
+func TestHandleReadInteractive(t *testing.T) {
+	testVal := "test text\n"
+	pipeWriter, _, testShell := shellFixture()
+	go func() {
+		fmt.Fprint(pipeWriter, testVal)
+	}()
+	testShell.interactive = true
+	go testShell.readInteractive()
+	recvVal := <-testShell.ReadInteractive
+	if recvVal != testVal {
+		t.Errorf("Received value was incorrect, got: %s, want: %s", testVal, recvVal)
+	}
+}
+
+// TestHandleWriteInteractive tests a single write from a pipe
+func TestHandleWriteInteractive(t *testing.T) {
+	testVal := "test text\n"
+	_, pipeReader, testShell := shellFixture()
+	testShell.WriteInteractive <- testVal
+	// Go interactive to test writeInteractive
+	testShell.interactive = true
+	go testShell.writeInteractive()
+	bufferedReader := bufio.NewReader(pipeReader)
+	recvVal, err := bufferedReader.ReadString('\n')
+	if err != nil {
+		t.Errorf("an error occurred reading the pipe")
+	}
+	if recvVal != testVal {
+		t.Errorf("Received value was incorrect, got: %s, want: %s", testVal, recvVal)
+	}
+}
+
+// TestDetach tests that the interactive channels detach
+func TestDetach(t *testing.T) {
+	testShell := Shell{active: true}
+	testShell.Interactive()
+	testShell.Detach()
+	// If we can lock the mutex, the session has detached
+	testShell.readMutex.Lock()
+	testShell.writeMutex.Lock()
 }
