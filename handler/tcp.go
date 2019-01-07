@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"github.com/kulinacs/cast/agent"
 	"github.com/kulinacs/cast/session"
 	log "github.com/sirupsen/logrus"
 	"net"
@@ -8,13 +9,13 @@ import (
 )
 
 type TCPHandler struct {
-	Sessions []*session.Shell
+	Sessions []session.Shell
 }
 
 func (handler *TCPHandler) Handle(port int) {
 	soc, err := net.Listen("tcp4", ":"+strconv.Itoa(port))
 	defer soc.Close()
-	log.WithFields(log.Fields{"port": port}).Error("starting handler")
+	log.WithFields(log.Fields{"port": port}).Info("starting handler")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -23,6 +24,12 @@ func (handler *TCPHandler) Handle(port int) {
 		if err != nil {
 			log.Fatal(err)
 		}
-		handler.Sessions = append(handler.Sessions, session.NewShell(conn))
+		shellSession, err := session.UpgradeShell(agent.NewShell(conn, 20))
+		if err != nil {
+			log.Fatal(err)
+		}
+		shellSession.Enumerate()
+		log.WithFields(log.Fields{"session": shellSession}).Info("new session")
+		handler.Sessions = append(handler.Sessions, shellSession)
 	}
 }
