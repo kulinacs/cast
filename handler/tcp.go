@@ -8,10 +8,12 @@ import (
 	"strconv"
 )
 
+// TCPHandler is a TCP reverse shell handler
 type TCPHandler struct {
 	Sessions []session.Shell
 }
 
+// Handle listens for and creates incoming sessions
 func (handler *TCPHandler) Handle(port int) {
 	soc, err := net.Listen("tcp4", ":"+strconv.Itoa(port))
 	defer soc.Close()

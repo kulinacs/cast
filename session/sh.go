@@ -7,6 +7,7 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+// Sh is a Linux POSIX shell
 type Sh struct {
 	agent         *agent.Shell
 	kernelVersion string
