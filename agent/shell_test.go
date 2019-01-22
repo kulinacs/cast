@@ -5,14 +5,13 @@ import (
 	"fmt"
 	"strings"
 	"testing"
+	"github.com/stretchr/testify/assert"
 )
 
 // TestNewShell tests creating a new shell
 func TestNewShell(t *testing.T) {
 	testShell := NewShell(bytes.NewBuffer(nil), 10)
-	if testShell.active != true {
-		t.Errorf("Test shell inactive")
-	}
+	assert.Equal(t, true, testShell.active, "new shell not active")
 }
 
 // TestRead tests a single non-interactive read
@@ -21,13 +20,9 @@ func TestRead(t *testing.T) {
 	testVal := "test text"
 	testShell := NewShell(&testBuffer, 10)
 	fmt.Fprintf(&testBuffer, testVal+"\n")
-	recvVal, _ := testShell.Read()
-	if recvVal != testVal {
-		t.Errorf("Received value was incorrect, got: %s, want: %s", recvVal, testVal)
-	}
-	if !testShell.active {
-		t.Errorf("Shell incorrectly marked inactive")
-	}
+	recvVal, err := testShell.Read()
+	assert.Equal(t, testVal, recvVal, "read value incorrect")
+	assert.Nil(t, err)
 }
 
 // TestReadAll tests a multiline non-interactive read
@@ -37,13 +32,9 @@ func TestReadAll(t *testing.T) {
 	testShell := NewShell(&testBuffer, 10)
 	fmt.Fprintf(&testBuffer, strings.Repeat(testVal+"\n", 3))
 	recvVal, err := testShell.ReadAll()
-	if err != nil {
-		t.Errorf("an error occurred reading the pipe")
-	}
+	assert.Nil(t, err)
 	for _, val := range recvVal {
-		if val != testVal {
-			t.Errorf("Received value was incorrect, got: %s, want: %s", val, testVal)
-		}
+		assert.Equal(t, testVal, val, "read all value incorrect")
 	}
 }
 
@@ -54,9 +45,7 @@ func TestWrite(t *testing.T) {
 	testShell := NewShell(&testBuffer, 10)
 	testShell.Write(testVal)
 	recvVal := testBuffer.String()
-	if recvVal != testVal+"\n" {
-		t.Errorf("Received value was incorrect, got: %s, want: %s", recvVal, testVal)
-	}
+	assert.Equal(t, testVal + "\n", recvVal, "write value incorrect")
 }
 
 // TestHandleReadInteractive tests a single interactive read
@@ -67,9 +56,7 @@ func TestHandleReadInteractive(t *testing.T) {
 	fmt.Fprintf(&testBuffer, testVal+"\n")
 	testShell.Interactive()
 	recvVal := <-testShell.ReadInteractive
-	if recvVal != testVal {
-		t.Errorf("Received value was incorrect, got: %s, want: %s", recvVal, testVal)
-	}
+	assert.Equal(t, testVal, recvVal, "interactive read value incorrect")
 }
 
 // TestHandleWriteInteractive tests a single write from a pipe
@@ -83,9 +70,7 @@ func TestHandleWriteInteractive(t *testing.T) {
 	for recvVal == "" {
 		recvVal = testBuffer.String()
 	}
-	if recvVal != testVal+"\n" {
-		t.Errorf("Received value was incorrect, got: %s, want: %s", recvVal, testVal)
-	}
+	assert.Equal(t, testVal + "\n", recvVal, "interactive write value incorrect")
 }
 
 // TestDetach tests that the interactive channels detach
