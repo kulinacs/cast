@@ -36,7 +36,7 @@ func (s *Sh) KernelVersion() string {
 		s.agent.Write("uname -r")
 		s.kernelVersion, err = s.agent.Read()
 		if err != nil {
-			log.WithFields(log.Fields{"err": err}).Error("error occured reading the version")
+			log.WithFields(log.Fields{"err": err}).Error("error occurred reading the version")
 		}
 	}
 	return s.kernelVersion
@@ -48,7 +48,7 @@ func (s *Sh) OSRelease() *release.OSRelease {
 		s.agent.Write("cat /etc/os-release")
 		result, err := s.agent.ReadAll()
 		if err != nil {
-			log.WithFields(log.Fields{"err": err}).Error("error occured reading os release")
+			log.WithFields(log.Fields{"err": err}).Error("error occurred reading os release")
 		}
 		s.osRelease = release.ParseOSRelease(result)
 	}
