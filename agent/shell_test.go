@@ -2,6 +2,7 @@ package agent
 
 import (
 	"bufio"
+	"bytes"
 	"fmt"
 	"io"
 	"strings"
@@ -17,6 +18,14 @@ func shellFixture() (*io.PipeWriter, *io.PipeReader, *Shell) {
 		ReadInteractive: make(chan string, 10),
 		writer:          writePipeWriter, WriteInteractive: make(chan string, 10)}
 	return readPipeWriter, writePipeReader, testShell
+}
+
+// TestNewShell tests creating a new shell
+func TestNewShell(t *testing.T) {
+	testShell := NewShell(bytes.NewBuffer(nil), 10)
+	if testShell.active != true {
+		t.Errorf("Test shell inactive")
+	}
 }
 
 // TestRead tests a single non-interactive read

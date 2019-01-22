@@ -3,16 +3,18 @@ package session
 import (
 	"fmt"
 	"github.com/kulinacs/cast/agent"
+	"github.com/kulinacs/linenum/release"
 	log "github.com/sirupsen/logrus"
 )
 
 type Sh struct {
 	agent         *agent.Shell
 	kernelVersion string
+	osRelease     *release.OSRelease
 }
 
 func (s *Sh) String() string {
-	return fmt.Sprintf("%s - %s", s.Type(), s.KernelVersion())
+	return fmt.Sprintf("%s - %s - %s", s.Type(), s.KernelVersion(), s.osRelease.PrettyName)
 }
 
 // Type returns the session type
@@ -39,11 +41,15 @@ func (s *Sh) KernelVersion() string {
 	return s.kernelVersion
 }
 
-func (s *Sh) OSRelease() {
-	s.agent.Write("cat /etc/os-release")
-	result, err := s.agent.ReadAll()
-	if err != nil {
-		log.WithFields(log.Fields{"err": err}).Error("error occured reading os release")
+// OSRelease returns the parsed contents of /etc/os-release
+func (s *Sh) OSRelease() *release.OSRelease {
+	if s.osRelease == nil {
+		s.agent.Write("cat /etc/os-release")
+		result, err := s.agent.ReadAll()
+		if err != nil {
+			log.WithFields(log.Fields{"err": err}).Error("error occured reading os release")
+		}
+		s.osRelease = release.ParseOSRelease(result)
 	}
-	log.WithFields(log.Fields{"result": result}).Error("os-release")
+	return s.osRelease
 }
