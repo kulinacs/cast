@@ -63,16 +63,17 @@ func (s *Shell) ReadAll() ([]string, error) {
 	s.readMutex.Lock()
 	defer s.readMutex.Unlock()
 	result := make([]string, 0)
-	timeout := time.NewTimer(50 * time.Millisecond)
+	timeout := time.NewTimer(5 * time.Millisecond)
 ReadLoop:
 	for {
 		select {
 		case <-timeout.C:
+			log.Debug("read all timeout")
 			break ReadLoop
 		case val := <-s.readInternal:
+			log.WithFields(log.Fields{"msg": val}).Debug("message received, resetting timeout")
 			result = append(result, val)
-			timeout.Reset(50 * time.Millisecond)
-		default:
+			timeout.Reset(5 * time.Millisecond)
 		}
 	}
 	return result, s.reader.Err()

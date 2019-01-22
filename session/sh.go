@@ -15,7 +15,7 @@ type Sh struct {
 }
 
 func (s *Sh) String() string {
-	return fmt.Sprintf("%s - %s - %s", s.Type(), s.KernelVersion(), s.osRelease.PrettyName)
+	return fmt.Sprintf(s.osRelease.PrettyName)
 }
 
 // Type returns the session type
@@ -31,6 +31,7 @@ func (s *Sh) Enumerate() {
 
 // KernelVersion returns the kernel version of the system, enumerating it if necessary
 func (s *Sh) KernelVersion() string {
+	log.Info("getting kernel version")
 	if s.kernelVersion == "" {
 		var err error
 		s.agent.Write("uname -r")
@@ -44,8 +45,10 @@ func (s *Sh) KernelVersion() string {
 
 // OSRelease returns the parsed contents of /etc/os-release
 func (s *Sh) OSRelease() *release.OSRelease {
+	log.Info("getting /etc/os-release")
 	if s.osRelease == nil {
 		s.agent.Write("cat /etc/os-release")
+		log.Info("getting os-release")
 		result, err := s.agent.ReadAll()
 		if err != nil {
 			log.WithFields(log.Fields{"err": err}).Error("error occurred reading os release")
