@@ -15,7 +15,12 @@ type Sh struct {
 }
 
 func (s *Sh) String() string {
-	return fmt.Sprintf(s.osRelease.PrettyName)
+	return fmt.Sprintf("%s - %s", s.Type(), s.agent.Addr)
+}
+
+// Agent returns the underlying agent
+func (s *Sh) Agent() *agent.Shell {
+	return s.agent
 }
 
 // Type returns the session type

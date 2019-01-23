@@ -5,15 +5,16 @@ import (
 	"fmt"
 	log "github.com/sirupsen/logrus"
 	"io"
+	"net"
 	"sync"
 	"time"
 )
 
 // NewShell returns a new Shell with created channels for non-blocking reads and writes
-func NewShell(conn io.ReadWriter, buffer int) *Shell {
+func NewShell(conn io.ReadWriter, buffer int, address net.Addr) *Shell {
 	newShell := &Shell{active: true, reader: bufio.NewScanner(conn), writer: conn,
 		readInternal: make(chan string, buffer), ReadInteractive: make(chan string, buffer),
-		WriteInteractive: make(chan string, buffer)}
+		WriteInteractive: make(chan string, buffer), Addr: address}
 	go newShell.startReader()
 	return newShell
 }
@@ -29,6 +30,7 @@ type Shell struct {
 	readInternal     chan string
 	ReadInteractive  chan string
 	WriteInteractive chan string
+	Addr             net.Addr
 }
 
 // startReader starts the process that reads from the scanner and puts it on the readInternal channel

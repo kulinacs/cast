@@ -3,14 +3,20 @@ package agent
 import (
 	"bytes"
 	"fmt"
+	"github.com/stretchr/testify/assert"
+	"net"
 	"strings"
 	"testing"
-	"github.com/stretchr/testify/assert"
 )
+
+func testAddr() *net.IPAddr {
+	testAddr, _ := net.ResolveIPAddr("ip", "127.0.0.1")
+	return testAddr
+}
 
 // TestNewShell tests creating a new shell
 func TestNewShell(t *testing.T) {
-	testShell := NewShell(bytes.NewBuffer(nil), 10)
+	testShell := NewShell(bytes.NewBuffer(nil), 10, testAddr())
 	assert.Equal(t, true, testShell.active, "new shell not active")
 }
 
@@ -18,7 +24,7 @@ func TestNewShell(t *testing.T) {
 func TestRead(t *testing.T) {
 	var testBuffer bytes.Buffer
 	testVal := "test text"
-	testShell := NewShell(&testBuffer, 10)
+	testShell := NewShell(&testBuffer, 10, testAddr())
 	fmt.Fprintf(&testBuffer, testVal+"\n")
 	recvVal, err := testShell.Read()
 	assert.Equal(t, testVal, recvVal, "read value incorrect")
@@ -29,7 +35,7 @@ func TestRead(t *testing.T) {
 func TestReadAll(t *testing.T) {
 	var testBuffer bytes.Buffer
 	testVal := "test text"
-	testShell := NewShell(&testBuffer, 10)
+	testShell := NewShell(&testBuffer, 10, testAddr())
 	fmt.Fprintf(&testBuffer, strings.Repeat(testVal+"\n", 3))
 	recvVal, err := testShell.ReadAll()
 	assert.Nil(t, err)
@@ -42,17 +48,17 @@ func TestReadAll(t *testing.T) {
 func TestWrite(t *testing.T) {
 	var testBuffer bytes.Buffer
 	testVal := "test text"
-	testShell := NewShell(&testBuffer, 10)
+	testShell := NewShell(&testBuffer, 10, testAddr())
 	testShell.Write(testVal)
 	recvVal := testBuffer.String()
-	assert.Equal(t, testVal + "\n", recvVal, "write value incorrect")
+	assert.Equal(t, testVal+"\n", recvVal, "write value incorrect")
 }
 
 // TestHandleReadInteractive tests a single interactive read
 func TestHandleReadInteractive(t *testing.T) {
 	var testBuffer bytes.Buffer
 	testVal := "test text"
-	testShell := NewShell(&testBuffer, 10)
+	testShell := NewShell(&testBuffer, 10, testAddr())
 	fmt.Fprintf(&testBuffer, testVal+"\n")
 	testShell.Interactive()
 	recvVal := <-testShell.ReadInteractive
@@ -63,14 +69,14 @@ func TestHandleReadInteractive(t *testing.T) {
 func TestHandleWriteInteractive(t *testing.T) {
 	var testBuffer bytes.Buffer
 	testVal := "test text"
-	testShell := NewShell(&testBuffer, 10)
+	testShell := NewShell(&testBuffer, 10, testAddr())
 	testShell.WriteInteractive <- testVal
 	testShell.Interactive()
 	recvVal := ""
 	for recvVal == "" {
 		recvVal = testBuffer.String()
 	}
-	assert.Equal(t, testVal + "\n", recvVal, "interactive write value incorrect")
+	assert.Equal(t, testVal+"\n", recvVal, "interactive write value incorrect")
 }
 
 // TestDetach tests that the interactive channels detach
