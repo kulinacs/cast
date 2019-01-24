@@ -44,7 +44,6 @@ func (handler *TCPHandler) Handle(port int) {
 			continue
 		}
 		shellSession, err := session.UpgradeShell(agent.NewShell(conn, 20, conn.RemoteAddr()))
-		handler.SessionCallback(shellSession)
 		if err != nil {
 			log.WithFields(log.Fields{"err": err}).Error("failed to upgrade session")
 			continue
@@ -53,6 +52,7 @@ func (handler *TCPHandler) Handle(port int) {
 			shellSession.Enumerate()
 		}
 		log.WithFields(log.Fields{"session": shellSession}).Info("new session")
+		handler.SessionCallback(shellSession)
 	}
 }
 
