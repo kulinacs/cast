@@ -7,6 +7,7 @@ import (
 	"net"
 	"strings"
 	"testing"
+	"time"
 )
 
 func testAddr() *net.IPAddr {
@@ -17,6 +18,12 @@ func testAddr() *net.IPAddr {
 // TestNewShell tests creating a new shell
 func TestNewShell(t *testing.T) {
 	testShell := NewShell(bytes.NewBuffer(nil), 10, testAddr())
+	assert.Equal(t, true, testShell.active, "new shell not active")
+}
+
+// TestNewSplitShell tests creating a new shell
+func TestNewSplitShell(t *testing.T) {
+	testShell := NewSplitShell(bytes.NewBuffer(nil), bytes.NewBuffer(nil), 10, testAddr())
 	assert.Equal(t, true, testShell.active, "new shell not active")
 }
 
@@ -65,19 +72,18 @@ func TestHandleReadInteractive(t *testing.T) {
 	assert.Equal(t, testVal, recvVal, "interactive read value incorrect")
 }
 
-// // TestHandleWriteInteractive tests a single write from a pipe
-// func TestHandleWriteInteractive(t *testing.T) {
-// 	var testBuffer bytes.Buffer
-// 	testVal := "test text"
-// 	testShell := NewShell(&testBuffer, 10, testAddr())
-// 	testShell.WriteInteractive <- testVal
-// 	testShell.Interactive()
-// 	recvVal := ""
-// 	for recvVal == "" {
-// 		recvVal = testBuffer.String()
-// 	}
-// 	assert.Equal(t, testVal+"\n", recvVal, "interactive write value incorrect")
-// }
+// TestHandleWriteInteractive tests a single write from a pipe
+func TestHandleWriteInteractive(t *testing.T) {
+	var testBuffer bytes.Buffer
+	testVal := "test text"
+	testShell := NewShell(&testBuffer, 10, testAddr())
+	testShell.Interactive()
+	testShell.WriteInteractive <- testVal
+	// Wait for the message to propagate
+	time.Sleep(10 * time.Millisecond)
+	recvVal := testBuffer.String()
+	assert.Equal(t, testVal+"\n", recvVal, "interactive write value incorrect")
+}
 
 // TestDetach tests that the interactive channels detach
 func TestDetach(t *testing.T) {

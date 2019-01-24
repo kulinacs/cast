@@ -19,6 +19,15 @@ func NewShell(conn io.ReadWriter, buffer int, address net.Addr) *Shell {
 	return newShell
 }
 
+// NewSplitShell shell returns a new shell with a seperate reader and writer
+func NewSplitShell(reader io.Reader, writer io.Writer, buffer int, address net.Addr) *Shell {
+	newShell := &Shell{active: true, reader: bufio.NewScanner(reader), writer: writer,
+		readInternal: make(chan string, buffer), ReadInteractive: make(chan string, buffer),
+		WriteInteractive: make(chan string, buffer), Addr: address}
+	go newShell.startReader()
+	return newShell
+}
+
 // Shell wraps a io.ReadWriter in a way that allows it to handle a remote shell
 type Shell struct {
 	active           bool
