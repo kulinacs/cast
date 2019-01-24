@@ -44,11 +44,11 @@ func (handler *TCPHandler) Handle(port int) {
 		}
 		log.WithFields(log.Fields{"addr": conn.RemoteAddr()}).Trace("incoming connection")
 		shellSession, err := session.UpgradeShell(agent.NewShell(conn, 20, conn.RemoteAddr()))
-		log.WithFields(log.Fields{"type": shellSession.Type()}).Trace("session upgraded")
 		if err != nil {
 			log.WithFields(log.Fields{"err": err}).Error("failed to upgrade session")
 			continue
 		}
+		log.WithFields(log.Fields{"type": shellSession.Type()}).Trace("session upgraded")
 		log.WithFields(log.Fields{"session": shellSession}).Info("new session")
 		handler.SessionCallback(shellSession)
 	}
