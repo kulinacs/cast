@@ -10,20 +10,20 @@ import (
 	"time"
 )
 
-func testAddr() *net.IPAddr {
+func mockAddr() *net.IPAddr {
 	testAddr, _ := net.ResolveIPAddr("ip", "127.0.0.1")
 	return testAddr
 }
 
 // TestNewShell tests creating a new shell
 func TestNewShell(t *testing.T) {
-	testShell := NewShell(bytes.NewBuffer(nil), 10, testAddr())
+	testShell := NewShell(bytes.NewBuffer(nil), 10, mockAddr())
 	assert.Equal(t, true, testShell.active, "new shell not active")
 }
 
 // TestNewSplitShell tests creating a new shell
 func TestNewSplitShell(t *testing.T) {
-	testShell := NewSplitShell(bytes.NewBuffer(nil), bytes.NewBuffer(nil), 10, testAddr())
+	testShell := NewSplitShell(bytes.NewBuffer(nil), bytes.NewBuffer(nil), 10, mockAddr())
 	assert.Equal(t, true, testShell.active, "new shell not active")
 }
 
@@ -31,7 +31,7 @@ func TestNewSplitShell(t *testing.T) {
 func TestRead(t *testing.T) {
 	var testBuffer bytes.Buffer
 	testVal := "test text"
-	testShell := NewShell(&testBuffer, 10, testAddr())
+	testShell := NewShell(&testBuffer, 10, mockAddr())
 	fmt.Fprintf(&testBuffer, testVal+"\n")
 	recvVal, err := testShell.Read()
 	assert.Equal(t, testVal, recvVal, "read value incorrect")
@@ -42,7 +42,7 @@ func TestRead(t *testing.T) {
 func TestReadAll(t *testing.T) {
 	var testBuffer bytes.Buffer
 	testVal := "test text"
-	testShell := NewShell(&testBuffer, 10, testAddr())
+	testShell := NewShell(&testBuffer, 10, mockAddr())
 	fmt.Fprintf(&testBuffer, strings.Repeat(testVal+"\n", 3))
 	recvVal, err := testShell.ReadAll()
 	assert.Nil(t, err)
@@ -55,7 +55,7 @@ func TestReadAll(t *testing.T) {
 func TestWrite(t *testing.T) {
 	var testBuffer bytes.Buffer
 	testVal := "test text"
-	testShell := NewShell(&testBuffer, 10, testAddr())
+	testShell := NewShell(&testBuffer, 10, mockAddr())
 	testShell.Write(testVal)
 	recvVal := testBuffer.String()
 	assert.Equal(t, testVal+"\n", recvVal, "write value incorrect")
@@ -65,7 +65,7 @@ func TestWrite(t *testing.T) {
 func TestHandleReadInteractive(t *testing.T) {
 	var testBuffer bytes.Buffer
 	testVal := "test text"
-	testShell := NewShell(&testBuffer, 10, testAddr())
+	testShell := NewShell(&testBuffer, 10, mockAddr())
 	fmt.Fprintf(&testBuffer, testVal+"\n")
 	testShell.Interactive()
 	recvVal := <-testShell.ReadInteractive
@@ -76,7 +76,7 @@ func TestHandleReadInteractive(t *testing.T) {
 func TestHandleWriteInteractive(t *testing.T) {
 	var testBuffer bytes.Buffer
 	testVal := "test text"
-	testShell := NewShell(&testBuffer, 10, testAddr())
+	testShell := NewShell(&testBuffer, 10, mockAddr())
 	testShell.Interactive()
 	testShell.WriteInteractive <- testVal
 	// Wait for the message to propagate
