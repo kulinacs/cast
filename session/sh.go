@@ -5,6 +5,7 @@ import (
 	"github.com/kulinacs/cast/agent"
 	"github.com/kulinacs/linenum/release"
 	log "github.com/sirupsen/logrus"
+	"time"
 )
 
 // Sh is a Linux POSIX shell
@@ -40,7 +41,7 @@ func (s *Sh) KernelVersion() string {
 	if s.kernelVersion == "" {
 		var err error
 		s.agent.Write("uname -r")
-		s.kernelVersion, err = s.agent.Read()
+		s.kernelVersion, err = s.agent.Read(time.Millisecond * 25)
 		if err != nil {
 			log.WithFields(log.Fields{"err": err}).Error("error occurred reading the version")
 		}

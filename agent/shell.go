@@ -2,6 +2,7 @@ package agent
 
 import (
 	"bufio"
+	"errors"
 	"fmt"
 	log "github.com/sirupsen/logrus"
 	"io"
@@ -9,6 +10,8 @@ import (
 	"sync"
 	"time"
 )
+
+var errReadTimeout = errors.New("timeout attempting to read shell")
 
 // NewShell returns a new Shell with created channels for non-blocking reads and writes
 func NewShell(conn io.ReadWriter, buffer int, address net.Addr) *Shell {
@@ -49,24 +52,25 @@ func (s *Shell) startReader() {
 	}
 }
 
-// read ignores the read mutex
-func (s *Shell) read() (string, error) {
-	val := <-s.readInternal
-	log.WithFields(log.Fields{"msg": val}).Trace("message received")
-	return val, s.reader.Err()
-}
-
 // write ignores the write mutex
 func (s *Shell) write(val string) {
 	log.WithFields(log.Fields{"msg": val}).Trace("message sent")
 	fmt.Fprint(s.writer, val+"\n")
 }
 
-// Read acquires the readMutex and reads from the underlying reader
-func (s *Shell) Read() (string, error) {
+// Read acquires the readMutex and reads from the underlying channel, with the given timeout
+func (s *Shell) Read(timeout time.Duration) (string, error) {
 	s.readMutex.Lock()
 	defer s.readMutex.Unlock()
-	return s.read()
+	timer := time.NewTimer(timeout)
+	select {
+	case <-timer.C:
+		log.Trace("read timeout")
+		return "", errReadTimeout
+	case val := <-s.readInternal:
+		log.WithFields(log.Fields{"msg": val}).Trace("message received")
+		return val, s.reader.Err()
+	}
 }
 
 // ReadAll acquires the readMutex and reads from the underlying reader with a timeout
@@ -79,7 +83,7 @@ ReadLoop:
 	for {
 		select {
 		case <-timeout.C:
-			log.Debug("read all timeout")
+			log.Trace("read all timeout")
 			break ReadLoop
 		case val := <-s.readInternal:
 			log.WithFields(log.Fields{"msg": val}).Debug("message received, resetting timeout")
@@ -102,8 +106,11 @@ func (s *Shell) readInteractive() {
 	s.readMutex.Lock()
 	defer s.readMutex.Unlock()
 	for s.active && s.interactive {
-		val, _ := s.read()
-		s.ReadInteractive <- val
+		select {
+		case val := <-s.readInternal:
+			s.ReadInteractive <- val
+		default:
+		}
 	}
 }
 

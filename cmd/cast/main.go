@@ -99,7 +99,7 @@ func createCmd() *ishell.Cmd {
 
 func init() {
 	log.SetOutput(os.Stdout)
-	log.SetLevel(log.InfoLevel)
+	log.SetLevel(log.TraceLevel)
 }
 
 func main() {

@@ -33,9 +33,20 @@ func TestRead(t *testing.T) {
 	testVal := "test text"
 	testShell := NewShell(&testBuffer, 10, mockAddr())
 	fmt.Fprintf(&testBuffer, testVal+"\n")
-	recvVal, err := testShell.Read()
+	recvVal, err := testShell.Read(10 * time.Millisecond)
 	assert.Equal(t, testVal, recvVal, "read value incorrect")
 	assert.Nil(t, err)
+}
+
+// TestReadError tests a failed interactive read
+func TestReadError(t *testing.T) {
+	var testBuffer bytes.Buffer
+	testVal := "test text"
+	testShell := NewShell(&testBuffer, 10, mockAddr())
+	fmt.Fprintf(&testBuffer, testVal)
+	recvVal, err := testShell.Read(time.Nanosecond)
+	assert.Equal(t, "", recvVal, "read value incorrect")
+	assert.Equal(t, errReadTimeout, err, "error incorrect")
 }
 
 // TestReadAll tests a multiline non-interactive read

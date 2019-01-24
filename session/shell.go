@@ -4,6 +4,7 @@ import (
 	"errors"
 	"github.com/kulinacs/cast/agent"
 	log "github.com/sirupsen/logrus"
+	"time"
 )
 
 var errUnknownShell = errors.New("unknown shell type")
@@ -18,7 +19,7 @@ type Shell interface {
 // UpgradeShell takes and incoming shell agent and upgrades it to a shell session
 func UpgradeShell(s *agent.Shell) (Shell, error) {
 	s.Write("uname -s")
-	os, err := s.Read()
+	os, err := s.Read(time.Millisecond * 25)
 	if err != nil {
 		return nil, err
 	}
