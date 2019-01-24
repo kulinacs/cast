@@ -41,9 +41,7 @@ func TestRead(t *testing.T) {
 // TestReadError tests a failed interactive read
 func TestReadError(t *testing.T) {
 	var testBuffer bytes.Buffer
-	testVal := "test text"
 	testShell := NewShell(&testBuffer, 10, mockAddr())
-	fmt.Fprintf(&testBuffer, testVal)
 	recvVal, err := testShell.Read(time.Nanosecond)
 	assert.Equal(t, "", recvVal, "read value incorrect")
 	assert.Equal(t, errReadTimeout, err, "error incorrect")
@@ -70,6 +68,16 @@ func TestWrite(t *testing.T) {
 	testShell.Write(testVal)
 	recvVal := testBuffer.String()
 	assert.Equal(t, testVal+"\n", recvVal, "write value incorrect")
+}
+
+// TestExecute tests a single exection
+func TestExecute(t *testing.T) {
+	var testBuffer bytes.Buffer
+	testVal := "test text"
+	testShell := NewShell(&testBuffer, 10, mockAddr())
+	recvVals, err := testShell.Execute(testVal)
+	assert.Nil(t, err)
+	assert.Equal(t, testVal, recvVals[0], "execute value incorrect")
 }
 
 // TestHandleReadInteractive tests a single interactive read

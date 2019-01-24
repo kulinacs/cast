@@ -101,6 +101,12 @@ func (s *Shell) Write(val string) {
 	s.write(val)
 }
 
+// Execute executes a command on the agent and returns the result as a string slice
+func (s *Shell) Execute(val string) ([]string, error) {
+	s.Write(val)
+	return s.ReadAll()
+}
+
 // readInteractive reads from the underlying buffer and returns the output to the ReadInteractive channel
 func (s *Shell) readInteractive() {
 	s.readMutex.Lock()

@@ -86,7 +86,7 @@ func createCmd() *ishell.Cmd {
 		Name: "tcp",
 		Help: "create tcp handler",
 		Func: func(c *ishell.Context) {
-			exampleHandler := handler.TCPHandler{SessionCallback: appendSession}
+			exampleHandler := handler.TCPHandler{AutoEnumerate: true, SessionCallback: appendSession}
 			port, _ := strconv.Atoi(c.Args[0])
 			go exampleHandler.Handle(port)
 			handlers = append(handlers, &exampleHandler)
