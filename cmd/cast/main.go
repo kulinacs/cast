@@ -4,20 +4,25 @@ import (
 	"bufio"
 	"github.com/abiosoft/ishell"
 	"github.com/kulinacs/cast/handler"
-	//	"github.com/kulinacs/cast/session"
+	"github.com/kulinacs/cast/session"
 	log "github.com/sirupsen/logrus"
 	"os"
 	"strconv"
 )
 
 var handlers []handler.Handler
+var sessions []session.Shell
 var shell *ishell.Shell
 
-func sessionInteract(c *ishell.Context, handlerIndex int, sessionIndex int) {
+func appendSession(sess session.Shell) {
+	sessions = append(sessions, sess)
+}
+
+func sessionInteract(c *ishell.Context, sessionIndex int) {
 	shell.Stop()
 	defer shell.Run()
 	reader := bufio.NewReader(os.Stdin)
-	sessionAgent := handlers[handlerIndex].Session(sessionIndex).Agent()
+	sessionAgent := sessions[sessionIndex].Agent()
 	for {
 		// Read the keyboad input
 		input, _ := reader.ReadString('\n')
@@ -40,16 +45,13 @@ func getCmd() *ishell.Cmd {
 		Help: "get session",
 		Func: func(c *ishell.Context) {
 			if len(c.Args) == 0 {
-				for index, element := range handlers {
-					for subindex, subelement := range element.Sessions() {
-						c.Printf("%d - %d - %s\n", index, subindex, subelement)
-					}
+				for index, element := range sessions {
+					c.Printf("%d - %s\n", index, element)
 				}
 			}
-			if len(c.Args) == 2 {
-				handlerIndex, _ := strconv.Atoi(c.Args[0])
-				sessionIndex, _ := strconv.Atoi(c.Args[1])
-				sessionInteract(c, handlerIndex, sessionIndex)
+			if len(c.Args) == 1 {
+				sessionIndex, _ := strconv.Atoi(c.Args[0])
+				sessionInteract(c, sessionIndex)
 			}
 		},
 	})
@@ -81,7 +83,7 @@ func createCmd() *ishell.Cmd {
 		Name: "tcp",
 		Help: "create tcp handler",
 		Func: func(c *ishell.Context) {
-			exampleHandler := handler.TCPHandler{}
+			exampleHandler := handler.TCPHandler{SessionCallback: appendSession}
 			port, _ := strconv.Atoi(c.Args[0])
 			go exampleHandler.Handle(port)
 			handlers = append(handlers, &exampleHandler)

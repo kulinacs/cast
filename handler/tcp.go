@@ -11,11 +11,19 @@ import (
 
 // TCPHandler is a TCP reverse shell handler
 type TCPHandler struct {
-	sessions []session.Shell
+	SessionCallback func(sess session.Shell)
+	AutoEnumerate   bool
+	soc             net.Listener
+	active          bool
 }
 
 func (handler *TCPHandler) String() string {
-	return fmt.Sprintf("%s - %d sessions", handler.Type(), len(handler.sessions))
+	return fmt.Sprintf("%s Handler - %s", handler.Type(), handler.soc.Addr())
+}
+
+// Type returns the sessions type
+func (handler *TCPHandler) Type() string {
+	return "TCP"
 }
 
 // Handle listens for and creates incoming sessions
@@ -25,36 +33,34 @@ func (handler *TCPHandler) Handle(port int) {
 		log.WithFields(log.Fields{"port": port, "err": err}).Error("failed to start tcp handler")
 		return
 	}
+	handler.soc = soc
+	handler.active = true
 	log.WithFields(log.Fields{"port": port}).Info("starting handler")
 	defer soc.Close()
-	for {
+	for handler.active {
 		conn, err := soc.Accept()
 		if err != nil {
 			log.WithFields(log.Fields{"port": port, "err": err}).Error("failed to accept incoming connection")
 			continue
 		}
 		shellSession, err := session.UpgradeShell(agent.NewShell(conn, 20, conn.RemoteAddr()))
+		handler.SessionCallback(shellSession)
 		if err != nil {
 			log.WithFields(log.Fields{"err": err}).Error("failed to upgrade session")
 			continue
 		}
-		shellSession.Enumerate()
+		if handler.AutoEnumerate {
+			shellSession.Enumerate()
+		}
 		log.WithFields(log.Fields{"session": shellSession}).Info("new session")
-		handler.sessions = append(handler.sessions, shellSession)
 	}
 }
 
-// Sessions returns the sessions slice
-func (handler *TCPHandler) Sessions() []session.Shell {
-	return handler.sessions
-}
-
-// Session returns the session at the specified index
-func (handler *TCPHandler) Session(index int) session.Shell {
-	return handler.sessions[index]
-}
-
-// Type returns the sessions type
-func (handler *TCPHandler) Type() string {
-	return "TCP"
+// Stop halts a running handler
+func (handler *TCPHandler) Stop() error {
+	if handler.active {
+		handler.active = false
+		return handler.soc.Close()
+	}
+	return nil
 }

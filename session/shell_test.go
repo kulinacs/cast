@@ -2,15 +2,15 @@ package session
 
 import (
 	"bytes"
-	"net"
-	"testing"
-	"io/ioutil"
-	"github.com/stretchr/testify/assert"
 	"github.com/kulinacs/cast/agent"
 	log "github.com/sirupsen/logrus"
+	"github.com/stretchr/testify/assert"
+	"io/ioutil"
+	"net"
+	"testing"
 )
 
-func mockShell(output string) (*agent.Shell, *bytes.Buffer){
+func mockShell(output string) (*agent.Shell, *bytes.Buffer) {
 	testAddr, _ := net.ResolveIPAddr("ip", "127.0.0.1")
 	var inputBuffer bytes.Buffer
 	testShell := agent.NewSplitShell(bytes.NewBufferString(output), &inputBuffer, 10, testAddr)
@@ -23,6 +23,7 @@ var upgradetests = []struct {
 }{
 	{"Linux\n", "Linux"},
 }
+
 func TestUpgradeShellValid(t *testing.T) {
 	for _, tt := range upgradetests {
 		t.Run(tt.in, func(t *testing.T) {
