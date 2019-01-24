@@ -36,7 +36,7 @@ func (s *Sh) Enumerate() {
 
 // KernelVersion returns the kernel version of the system, enumerating it if necessary
 func (s *Sh) KernelVersion() string {
-	log.Info("getting kernel version")
+	log.Debug("getting kernel version")
 	if s.kernelVersion == "" {
 		var err error
 		s.agent.Write("uname -r")
@@ -50,7 +50,7 @@ func (s *Sh) KernelVersion() string {
 
 // OSRelease returns the parsed contents of /etc/os-release
 func (s *Sh) OSRelease() *release.OSRelease {
-	log.Info("getting /etc/os-release")
+	log.Debug("getting /etc/os-release")
 	if s.osRelease == nil {
 		s.agent.Write("cat /etc/os-release")
 		log.Info("getting os-release")

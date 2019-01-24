@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"fmt"
 	"github.com/abiosoft/ishell"
 	"github.com/kulinacs/cast/handler"
 	"github.com/kulinacs/cast/session"
@@ -30,8 +31,10 @@ func sessionInteract(c *ishell.Context, sessionIndex int) {
 		if input == "background\n" {
 			break
 		}
-		output, _ := sessionAgent.Read()
-		c.Printf("%s", output)
+		output, _ := sessionAgent.ReadAll()
+		for _, element := range output {
+			fmt.Printf("%s\n", element)
+		}
 	}
 }
 
@@ -95,8 +98,8 @@ func createCmd() *ishell.Cmd {
 }
 
 func init() {
-	// Only log the warning severity or above.
-	log.SetLevel(log.DebugLevel)
+	log.SetOutput(os.Stdout)
+	log.SetLevel(log.InfoLevel)
 }
 
 func main() {

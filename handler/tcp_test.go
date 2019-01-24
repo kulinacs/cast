@@ -18,4 +18,3 @@ func TestType(t *testing.T) {
 	testHandler := TCPHandler{}
 	assert.Equal(t, "TCP", testHandler.Type(), "type incorrect")
 }
-

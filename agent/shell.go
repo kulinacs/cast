@@ -52,13 +52,13 @@ func (s *Shell) startReader() {
 // read ignores the read mutex
 func (s *Shell) read() (string, error) {
 	val := <-s.readInternal
-	log.WithFields(log.Fields{"msg": val}).Debug("message received")
+	log.WithFields(log.Fields{"msg": val}).Trace("message received")
 	return val, s.reader.Err()
 }
 
 // write ignores the write mutex
 func (s *Shell) write(val string) {
-	log.WithFields(log.Fields{"msg": val}).Debug("message sent")
+	log.WithFields(log.Fields{"msg": val}).Trace("message sent")
 	fmt.Fprint(s.writer, val+"\n")
 }
 
@@ -74,7 +74,7 @@ func (s *Shell) ReadAll() ([]string, error) {
 	s.readMutex.Lock()
 	defer s.readMutex.Unlock()
 	result := make([]string, 0)
-	timeout := time.NewTimer(5 * time.Millisecond)
+	timeout := time.NewTimer(25 * time.Millisecond)
 ReadLoop:
 	for {
 		select {
@@ -84,7 +84,7 @@ ReadLoop:
 		case val := <-s.readInternal:
 			log.WithFields(log.Fields{"msg": val}).Debug("message received, resetting timeout")
 			result = append(result, val)
-			timeout.Reset(5 * time.Millisecond)
+			timeout.Reset(25 * time.Millisecond)
 		}
 	}
 	return result, s.reader.Err()
