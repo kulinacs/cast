@@ -8,35 +8,35 @@ import (
 	"time"
 )
 
-// Sh is a Linux POSIX shell
-type Sh struct {
+// Posix is POSIX shell
+type Posix struct {
 	agent         *agent.Shell
 	kernelVersion string
 	osRelease     *release.OSRelease
 }
 
-func (s *Sh) String() string {
+func (s *Posix) String() string {
 	return fmt.Sprintf("%s - %s", s.Type(), s.agent.Addr)
 }
 
 // Agent returns the underlying agent
-func (s *Sh) Agent() *agent.Shell {
+func (s *Posix) Agent() *agent.Shell {
 	return s.agent
 }
 
 // Type returns the session type
-func (s *Sh) Type() string {
-	return "Linux"
+func (s *Posix) Type() string {
+	return "Posix"
 }
 
 // Enumerate gathers basic information about the system
-func (s *Sh) Enumerate() {
+func (s *Posix) Enumerate() {
 	s.KernelVersion()
 	s.OSRelease()
 }
 
 // KernelVersion returns the kernel version of the system, enumerating it if necessary
-func (s *Sh) KernelVersion() string {
+func (s *Posix) KernelVersion() string {
 	log.Debug("getting kernel version")
 	if s.kernelVersion == "" {
 		var err error
@@ -50,7 +50,7 @@ func (s *Sh) KernelVersion() string {
 }
 
 // OSRelease returns the parsed contents of /etc/os-release
-func (s *Sh) OSRelease() *release.OSRelease {
+func (s *Posix) OSRelease() *release.OSRelease {
 	log.Debug("getting /etc/os-release")
 	if s.osRelease == nil {
 		s.agent.Write("cat /etc/os-release")

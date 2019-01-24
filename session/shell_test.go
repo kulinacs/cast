@@ -21,7 +21,7 @@ var upgradetests = []struct {
 	in  string
 	out string
 }{
-	{"Linux\n", "Linux"},
+	{"/bin/sh", "Posix"},
 }
 
 func TestUpgradeShellValid(t *testing.T) {
@@ -30,7 +30,7 @@ func TestUpgradeShellValid(t *testing.T) {
 			testShell, readBuffer := mockShell(tt.in)
 			testSession, err := UpgradeShell(testShell)
 			assert.Nil(t, err)
-			assert.Equal(t, "uname -s\n", readBuffer.String(), "correct command not called")
+			assert.Equal(t, "echo $SHELL\n", readBuffer.String(), "correct command not called")
 			assert.Equal(t, tt.out, testSession.Type(), "shell not correctly identified")
 		})
 	}
@@ -40,6 +40,6 @@ func TestUpgradeShellInvalid(t *testing.T) {
 	log.SetOutput(ioutil.Discard)
 	testShell, readBuffer := mockShell("failure\n")
 	_, err := UpgradeShell(testShell)
-	assert.Equal(t, "uname -s\n", readBuffer.String(), "correct command not called")
+	assert.Equal(t, "echo $SHELL\n", readBuffer.String(), "correct command not called")
 	assert.Equal(t, errUnknownShell, err, "error not returned")
 }

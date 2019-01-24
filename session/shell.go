@@ -4,7 +4,7 @@ import (
 	"errors"
 	"github.com/kulinacs/cast/agent"
 	log "github.com/sirupsen/logrus"
-	"time"
+	"strings"
 )
 
 var errUnknownShell = errors.New("unknown shell type")
@@ -18,14 +18,13 @@ type Shell interface {
 
 // UpgradeShell takes and incoming shell agent and upgrades it to a shell session
 func UpgradeShell(s *agent.Shell) (Shell, error) {
-	s.Write("uname -s")
-	os, err := s.Read(time.Millisecond * 25)
+	shellLines, err := s.Execute("echo $SHELL")
 	if err != nil {
 		return nil, err
 	}
-	if os == "Linux" {
-		return &Sh{agent: s}, nil
+	if len(shellLines) == 1 && strings.Contains(shellLines[0], "sh") {
+		return &Posix{agent: s}, nil
 	}
-	log.WithFields(log.Fields{"os": os}).Error("unknown shell type")
+	log.Error("unknown shell type")
 	return nil, errUnknownShell
 }
