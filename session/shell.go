@@ -11,9 +11,9 @@ var errUnknownShell = errors.New("unknown shell type")
 
 // Shell type session, to be implemented by for example, sh or Powershell
 type Shell interface {
-	Enumerate()
 	Type() string
-	Agent() *agent.Shell
+	Execute(command string) ([]string, error)
+	OS() string
 }
 
 // UpgradeShell takes and incoming shell agent and upgrades it to a shell session

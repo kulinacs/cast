@@ -86,7 +86,7 @@ ReadLoop:
 			log.Trace("read all timeout")
 			break ReadLoop
 		case val := <-s.readInternal:
-			log.WithFields(log.Fields{"msg": val}).Debug("message received, resetting timeout")
+			log.WithFields(log.Fields{"msg": val}).Trace("message received, resetting timeout")
 			result = append(result, val)
 			timeout.Reset(25 * time.Millisecond)
 		}

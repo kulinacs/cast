@@ -12,7 +12,6 @@ import (
 // TCPHandler is a TCP reverse shell handler
 type TCPHandler struct {
 	SessionCallback func(sess session.Shell)
-	AutoEnumerate   bool
 	soc             net.Listener
 	active          bool
 }
@@ -43,13 +42,12 @@ func (handler *TCPHandler) Handle(port int) {
 			log.WithFields(log.Fields{"port": port, "err": err}).Error("failed to accept incoming connection")
 			continue
 		}
+		log.WithFields(log.Fields{"addr": conn.RemoteAddr()}).Trace("incoming connection")
 		shellSession, err := session.UpgradeShell(agent.NewShell(conn, 20, conn.RemoteAddr()))
+		log.WithFields(log.Fields{"type": shellSession.Type()}).Trace("session upgraded")
 		if err != nil {
 			log.WithFields(log.Fields{"err": err}).Error("failed to upgrade session")
 			continue
-		}
-		if handler.AutoEnumerate {
-			shellSession.Enumerate()
 		}
 		log.WithFields(log.Fields{"session": shellSession}).Info("new session")
 		handler.SessionCallback(shellSession)

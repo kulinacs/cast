@@ -23,15 +23,14 @@ func sessionInteract(c *ishell.Context, sessionIndex int) {
 	shell.Stop()
 	defer shell.Run()
 	reader := bufio.NewReader(os.Stdin)
-	sessionAgent := sessions[sessionIndex].Agent()
+	selectedSession := sessions[sessionIndex]
 	for {
 		// Read the keyboad input
 		input, _ := reader.ReadString('\n')
-		sessionAgent.Write(input)
 		if input == "background\n" {
 			break
 		}
-		output, _ := sessionAgent.ReadAll()
+		output, _ := selectedSession.Execute(input)
 		for _, element := range output {
 			fmt.Printf("%s\n", element)
 		}
@@ -86,7 +85,7 @@ func createCmd() *ishell.Cmd {
 		Name: "tcp",
 		Help: "create tcp handler",
 		Func: func(c *ishell.Context) {
-			exampleHandler := handler.TCPHandler{AutoEnumerate: true, SessionCallback: appendSession}
+			exampleHandler := handler.TCPHandler{SessionCallback: appendSession}
 			port, _ := strconv.Atoi(c.Args[0])
 			go exampleHandler.Handle(port)
 			handlers = append(handlers, &exampleHandler)
