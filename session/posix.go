@@ -10,6 +10,7 @@ import (
 type Posix struct {
 	agent *agent.Shell
 	os    string
+	user  string
 }
 
 func (s *Posix) String() string {
@@ -39,4 +40,19 @@ func (s *Posix) OS() string {
 		}
 	}
 	return s.os
+}
+
+// User identifies the current user
+func (s *Posix) User() string {
+	log.Trace("enumerating user")
+	outputLines, err := s.agent.Execute("id")
+	if len(outputLines) != 1 {
+		log.WithFields(log.Fields{"output": outputLines, "err": err}).Error("unknown response for user received")
+		s.user = "unknown"
+	} else {
+		s.user = outputLines[0]
+	}
+	if s.user == "" {
+	}
+	return s.user
 }

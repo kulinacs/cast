@@ -25,7 +25,7 @@ func sessionInteract(c *ishell.Context, sessionIndex int) {
 	reader := bufio.NewReader(os.Stdin)
 	selectedSession := sessions[sessionIndex]
 	for {
-		// Read the keyboad input
+		// Read the keyboard input
 		input, _ := reader.ReadString('\n')
 		if input == "background\n" {
 			break

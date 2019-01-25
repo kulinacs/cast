@@ -70,7 +70,7 @@ func TestWrite(t *testing.T) {
 	assert.Equal(t, testVal+"\n", recvVal, "write value incorrect")
 }
 
-// TestExecute tests a single exection
+// TestExecute tests a single execution
 func TestExecute(t *testing.T) {
 	var testBuffer bytes.Buffer
 	testVal := "test text"

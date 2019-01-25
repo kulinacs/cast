@@ -24,7 +24,7 @@ func NewShell(conn io.ReadWriter, buffer int, address net.Addr) *Shell {
 	return newShell
 }
 
-// NewSplitShell shell returns a new shell with a seperate reader and writer
+// NewSplitShell shell returns a new shell with a separate reader and writer
 func NewSplitShell(reader io.Reader, writer io.Writer, buffer int, address net.Addr) *Shell {
 	newShell := &Shell{active: true, reader: bufio.NewScanner(reader), writer: writer,
 		readInternal: make(chan string, buffer), Addr: address}
@@ -34,13 +34,13 @@ func NewSplitShell(reader io.Reader, writer io.Writer, buffer int, address net.A
 
 // Shell wraps a io.ReadWriter in a way that allows it to handle a remote shell
 type Shell struct {
-	active           bool
-	readMutex        sync.Mutex
-	writeMutex       sync.Mutex
-	reader           *bufio.Scanner
-	writer           io.Writer
-	readInternal     chan string
-	Addr             net.Addr
+	active       bool
+	readMutex    sync.Mutex
+	writeMutex   sync.Mutex
+	reader       *bufio.Scanner
+	writer       io.Writer
+	readInternal chan string
+	Addr         net.Addr
 }
 
 // startReader starts the process that reads from the scanner and puts it on the readInternal channel
