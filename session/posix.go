@@ -31,11 +31,8 @@ func (s *Posix) OS() string {
 	log.Trace("enumerating OS")
 	if s.os == "" {
 		outputLines, err := s.agent.Execute("uname -s")
-		if err != nil {
-			log.WithFields(log.Fields{"err": err}).Error("error occurred identifying the operation system")
-			s.os = "unknown"
-		} else if len(outputLines) != 1 {
-			log.WithFields(log.Fields{"output": outputLines}).Error("unknown response for OS received")
+		if len(outputLines) != 1 {
+			log.WithFields(log.Fields{"output": outputLines, "err": err}).Error("unknown response for OS received")
 			s.os = "unknown"
 		} else {
 			s.os = outputLines[0]

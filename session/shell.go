@@ -18,10 +18,7 @@ type Shell interface {
 
 // UpgradeShell takes and incoming shell agent and upgrades it to a shell session
 func UpgradeShell(s *agent.Shell) (Shell, error) {
-	shellLines, err := s.Execute("echo $SHELL")
-	if err != nil {
-		return nil, err
-	}
+	shellLines, _ := s.Execute("echo $SHELL")
 	if len(shellLines) == 1 && strings.Contains(shellLines[0], "sh") {
 		return &Posix{agent: s}, nil
 	}

@@ -35,7 +35,7 @@ func TestRead(t *testing.T) {
 	fmt.Fprintf(&testBuffer, testVal+"\n")
 	recvVal, err := testShell.Read(10 * time.Millisecond)
 	assert.Equal(t, testVal, recvVal, "read value incorrect")
-	assert.Nil(t, err)
+	assert.Equal(t, ErrShellClosed, err, "shell not closed")
 }
 
 // TestReadError tests a failed interactive read
@@ -54,7 +54,7 @@ func TestReadAll(t *testing.T) {
 	testShell := NewShell(&testBuffer, 10, mockAddr())
 	fmt.Fprintf(&testBuffer, strings.Repeat(testVal+"\n", 3))
 	recvVal, err := testShell.ReadAll()
-	assert.Nil(t, err)
+	assert.Equal(t, ErrShellClosed, err, "shell not closed")
 	for _, val := range recvVal {
 		assert.Equal(t, testVal, val, "read all value incorrect")
 	}
@@ -76,40 +76,6 @@ func TestExecute(t *testing.T) {
 	testVal := "test text"
 	testShell := NewShell(&testBuffer, 10, mockAddr())
 	recvVals, err := testShell.Execute(testVal)
-	assert.Nil(t, err)
+	assert.Equal(t, ErrShellClosed, err, "shell not closed")
 	assert.Equal(t, testVal, recvVals[0], "execute value incorrect")
-}
-
-// TestHandleReadInteractive tests a single interactive read
-func TestHandleReadInteractive(t *testing.T) {
-	var testBuffer bytes.Buffer
-	testVal := "test text"
-	testShell := NewShell(&testBuffer, 10, mockAddr())
-	fmt.Fprintf(&testBuffer, testVal+"\n")
-	testShell.Interactive()
-	recvVal := <-testShell.ReadInteractive
-	assert.Equal(t, testVal, recvVal, "interactive read value incorrect")
-}
-
-// TestHandleWriteInteractive tests a single write from a pipe
-func TestHandleWriteInteractive(t *testing.T) {
-	var testBuffer bytes.Buffer
-	testVal := "test text"
-	testShell := NewShell(&testBuffer, 10, mockAddr())
-	testShell.Interactive()
-	testShell.WriteInteractive <- testVal
-	// Wait for the message to propagate
-	time.Sleep(10 * time.Millisecond)
-	recvVal := testBuffer.String()
-	assert.Equal(t, testVal+"\n", recvVal, "interactive write value incorrect")
-}
-
-// TestDetach tests that the interactive channels detach
-func TestDetach(t *testing.T) {
-	testShell := Shell{active: true}
-	testShell.Interactive()
-	testShell.Detach()
-	// If we can lock the mutex, the session has detached
-	testShell.readMutex.Lock()
-	testShell.writeMutex.Lock()
 }

@@ -28,7 +28,7 @@ func TestExecute(t *testing.T) {
 	testPosix := Posix{agent: testShell}
 	testVal := "test"
 	recvVals, err := testPosix.Execute(testVal)
-	assert.Nil(t, err)
+	assert.Equal(t, err, agent.ErrShellClosed, "shell agent still open")
 	assert.Equal(t, testVal, recvVals[0], "execute value incorrect")
 }
 

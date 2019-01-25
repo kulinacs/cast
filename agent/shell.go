@@ -12,13 +12,14 @@ import (
 )
 
 var errReadTimeout = errors.New("timeout attempting to read shell")
-var errShellClosed = errors.New("shell is no longer active")
+
+// ErrShellClosed occurs when the shell agent is no longer active
+var ErrShellClosed = errors.New("shell is no longer active")
 
 // NewShell returns a new Shell with created channels for non-blocking reads and writes
 func NewShell(conn io.ReadWriter, buffer int, address net.Addr) *Shell {
 	newShell := &Shell{active: true, reader: bufio.NewScanner(conn), writer: conn,
-		readInternal: make(chan string, buffer), ReadInteractive: make(chan string, buffer),
-		WriteInteractive: make(chan string, buffer), Addr: address}
+		readInternal: make(chan string, buffer), Addr: address}
 	go newShell.startReader()
 	return newShell
 }
@@ -26,8 +27,7 @@ func NewShell(conn io.ReadWriter, buffer int, address net.Addr) *Shell {
 // NewSplitShell shell returns a new shell with a seperate reader and writer
 func NewSplitShell(reader io.Reader, writer io.Writer, buffer int, address net.Addr) *Shell {
 	newShell := &Shell{active: true, reader: bufio.NewScanner(reader), writer: writer,
-		readInternal: make(chan string, buffer), ReadInteractive: make(chan string, buffer),
-		WriteInteractive: make(chan string, buffer), Addr: address}
+		readInternal: make(chan string, buffer), Addr: address}
 	go newShell.startReader()
 	return newShell
 }
@@ -35,14 +35,11 @@ func NewSplitShell(reader io.Reader, writer io.Writer, buffer int, address net.A
 // Shell wraps a io.ReadWriter in a way that allows it to handle a remote shell
 type Shell struct {
 	active           bool
-	interactive      bool
 	readMutex        sync.Mutex
 	writeMutex       sync.Mutex
 	reader           *bufio.Scanner
 	writer           io.Writer
 	readInternal     chan string
-	ReadInteractive  chan string
-	WriteInteractive chan string
 	Addr             net.Addr
 }
 
@@ -73,7 +70,7 @@ func (s *Shell) Read(timeout time.Duration) (string, error) {
 	case val := <-s.readInternal:
 		log.WithFields(log.Fields{"msg": val}).Trace("message received")
 		if !s.active {
-			return val, errShellClosed
+			return val, ErrShellClosed
 		}
 		return val, s.reader.Err()
 	}
@@ -98,7 +95,7 @@ ReadLoop:
 		}
 	}
 	if !s.active {
-		return result, errShellClosed
+		return result, ErrShellClosed
 	}
 	return result, s.reader.Err()
 }
@@ -114,42 +111,4 @@ func (s *Shell) Write(val string) {
 func (s *Shell) Execute(val string) ([]string, error) {
 	s.Write(val)
 	return s.ReadAll()
-}
-
-// readInteractive reads from the underlying buffer and returns the output to the ReadInteractive channel
-func (s *Shell) readInteractive() {
-	s.readMutex.Lock()
-	defer s.readMutex.Unlock()
-	for s.active && s.interactive {
-		select {
-		case val := <-s.readInternal:
-			s.ReadInteractive <- val
-		default:
-		}
-	}
-}
-
-// writeInteractive reads from the WriteInteractive channel and writes it to the underlying writer
-func (s *Shell) writeInteractive() {
-	s.writeMutex.Lock()
-	defer s.writeMutex.Unlock()
-	for s.active && s.interactive {
-		select {
-		case val := <-s.WriteInteractive:
-			s.write(val)
-		default:
-		}
-	}
-}
-
-// Interactive enables the interactive read and write channels
-func (s *Shell) Interactive() {
-	s.interactive = true
-	go s.readInteractive()
-	go s.writeInteractive()
-}
-
-// Detach disables the interactive read and write channels
-func (s *Shell) Detach() {
-	s.interactive = false
 }
