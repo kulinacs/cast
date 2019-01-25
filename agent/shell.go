@@ -12,6 +12,7 @@ import (
 )
 
 var errReadTimeout = errors.New("timeout attempting to read shell")
+var errShellClosed = errors.New("shell is no longer active")
 
 // NewShell returns a new Shell with created channels for non-blocking reads and writes
 func NewShell(conn io.ReadWriter, buffer int, address net.Addr) *Shell {
@@ -50,6 +51,8 @@ func (s *Shell) startReader() {
 	for s.reader.Scan() {
 		s.readInternal <- s.reader.Text()
 	}
+	log.Trace("closing session")
+	s.active = false
 }
 
 // write ignores the write mutex
@@ -69,6 +72,9 @@ func (s *Shell) Read(timeout time.Duration) (string, error) {
 		return "", errReadTimeout
 	case val := <-s.readInternal:
 		log.WithFields(log.Fields{"msg": val}).Trace("message received")
+		if !s.active {
+			return val, errShellClosed
+		}
 		return val, s.reader.Err()
 	}
 }
@@ -90,6 +96,9 @@ ReadLoop:
 			result = append(result, val)
 			timeout.Reset(25 * time.Millisecond)
 		}
+	}
+	if !s.active {
+		return result, errShellClosed
 	}
 	return result, s.reader.Err()
 }

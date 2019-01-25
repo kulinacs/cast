@@ -30,7 +30,11 @@ func sessionInteract(c *ishell.Context, sessionIndex int) {
 		if input == "background\n" {
 			break
 		}
-		output, _ := selectedSession.Execute(input)
+		output, err := selectedSession.Execute(input)
+		if err != nil {
+			log.WithFields(log.Fields{"err": err}).Error("closing session")
+			break
+		}
 		for _, element := range output {
 			fmt.Printf("%s\n", element)
 		}
@@ -98,7 +102,7 @@ func createCmd() *ishell.Cmd {
 
 func init() {
 	log.SetOutput(os.Stdout)
-	log.SetLevel(log.TraceLevel)
+	log.SetLevel(log.InfoLevel)
 }
 
 func main() {
